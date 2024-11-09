@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Favorite Recipes</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
+    <link rel="shortcut icon" href="icon.webp" type="image/svg+xml">
+    <style>
+        /* Reset default margin and padding */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f9f9f9;
+            overflow: auto; /* Prevent scrollbars from showing */
+        }
+
+        /* Video background styles */
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: cover;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            backdrop-filter: blur(5px);
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+            border-radius: 15px; /* Rounded corners */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+            overflow: hidden;
+        }
+
+        header {
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 30px;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #333;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: #ff5722;
+            color: white;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 2.2em;
+            margin-bottom: 30px;
+            color: #333;
+            font-weight: 700;
+        }
+
+        .meal-item {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: #fff;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+            cursor: pointer;
+        }
+
+        .meal-item:hover {
+            transform: translateY(-5px); /* Smooth hover lift effect */
+        }
+
+        .meal-img img {
+            width: 100px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .meal-name h3 {
+            color: #333;
+            font-size: 1.4em;
+            font-weight: 600;
+        }
+
+        .remove-btn {
+            background-color: #ff5722; /* Modern red accent */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background-color: #e64a19; /* Darker shade of red */
+        }
+
+        #no-favorites-message {
+            text-align: center;
+            font-size: 1.2em;
+            color: #f44336;
+            margin-top: 30px;
+        }
+
+        /* Additional modern styles */
+        footer {
+            text-align: center;
+            font-size: 1.1em;
+            color: #999;
+            margin-top: 40px;
+        }
+        
+    </style>
+</head>
+<body>
+    <!-- Background video -->
+    <video id="video-background" autoplay loop muted>
+        <source src="bk_video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <header>
+        <nav>
+            <a href="index.html"><img src="home.jpeg" id="logo-img" alt="Logo" style="height: 40px;"></a>
+            <div>
+                <a href="#" onclick="window.history.back(); return false;">Home</a>
+                <a href="favorite.html">Favorite</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2 class="title">Your Favorite Recipes:</h2>
+        <div id="favorites-list"></div>
+        <p id="no-favorites-message" style="display:none;">No favorite recipes found.</p>
+    </main>
+
+    <section id="meal-details">
+        <div id="meal-details-content">
+            <span id="close-btn">&times;</span>
+            <!-- Meal details will be dynamically added here -->
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Your Favorite Recipes | All Rights Reserved</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', showFavorites);  // Show favorites when page loads
+
+        function showFavorites() {
+            const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            const favoritesList = document.getElementById('favorites-list');
+            const noFavoritesMessage = document.getElementById('no-favorites-message');
+            let html = "";
+
+            if (favorites.length === 0) {
+                // If no favorites are found, show a message
+                noFavoritesMessage.style.display = "block";
+                favoritesList.innerHTML = "";
+            } else {
+                // Hide the no favorites message
+                noFavoritesMessage.style.display = "none";
+
+                // Fetch details of each favorite meal from the API
+                favorites.forEach(mealId => {
+                    fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const meal = data.meals[0];  // Get the specific meal data
+                            html += `
+                                <div class="meal-item" data-id="${meal.idMeal}">
+                                    <div class="meal-img">
+                                        <img src="${meal.strMealThumb}" alt="${meal.strMeal}">
+                                    </div>
+                                    <div class="meal-name">
+                                        <h3>${meal.strMeal}</h3>
+                                    </div>
+                                    <button class="remove-btn" data-id="${meal.idMeal}">Remove</button>
+                                </div>
+                            `;
+                            favoritesList.innerHTML = html;  // Update the HTML to display favorite meals
+
+                            // Add event listener for removing a meal from favorites
+                            const removeBtns = document.querySelectorAll('.remove-btn');
+                            removeBtns.forEach(button => {
+                                button.addEventListener('click', function () {
+                                    removeFavorite(button.getAttribute('data-id'));  // Call function to remove meal from favorites
+                                });
+                            });
+                        });
+                });
+            }
+        }
+
+        // Function to remove a favorite recipe
+        function removeFavorite(mealId) {
+            let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            favorites = favorites.filter(id => id !== mealId);  // Remove the meal ID from the favorites array
+            localStorage.setItem('favorites', JSON.stringify(favorites));  // Update localStorage
+            showFavorites();  // Refresh the list after removing a favorite
+        }
+    </script>
+</body>
+</html>
